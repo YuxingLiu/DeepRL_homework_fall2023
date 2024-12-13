@@ -73,9 +73,69 @@ def HalfCheetah():
     plt.suptitle(f"Experiment 2 (HalfCheetah)", fontsize=20)
     plt.savefig('data/2_HalfCheetah.png')
 
+
+def LunarLander():
+    files = ["q2_pg_lunar_lander_lambda_0_LunarLander-v2_13-12-2024_19-57-16",
+             "q2_pg_lunar_lander_lambda_95_LunarLander-v2_13-12-2024_20-28-27",
+             "q2_pg_lunar_lander_lambda_98_LunarLander-v2_13-12-2024_19-46-06",
+             "q2_pg_lunar_lander_lambda_99_LunarLander-v2_13-12-2024_20-39-47",
+             "q2_pg_lunar_lander_lambda_1_LunarLander-v2_13-12-2024_20-15-21"]
+    data = []
+    for file in files:
+        data.append(np.genfromtxt(os.path.join("data", file, "data.csv"), names = True, delimiter=' '))
+
+    colors = ['r', 'g', 'b', 'k', 'c']
+    lines = ['-', '--', ':', '-.', '-']
+    labels = [r"$\lambda$ = 0", r"$\lambda$ = 0.95", r"$\lambda$ = 0.98", r"$\lambda$ = 0.99", r"$\lambda$ = 1"]
+
+    plt.figure(figsize=(8, 6))
+    for i in range(5):
+        plt.plot(data[i]["Train_EnvstepsSoFar"], data[i]["Eval_AverageReturn"],
+                 color = colors[i], linestyle = lines[i], label = labels[i])
+
+    plt.ylabel("eval average return", fontsize = 16)
+    plt.xlabel("env step num", fontsize = 16)
+    plt.legend(loc = "lower right")
+    plt.title("Batch size 2000", fontsize = 20)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.suptitle(f"Experiment 3 (LunarLander)", fontsize=20)
+    plt.savefig('data/3_LunarLander.png')
+
+
+def Hopper():
+    files = ["q2_pg_hopper_lambda_0_Hopper-v4_13-12-2024_22-15-50",
+             "q2_pg_hopper_lambda_98_Hopper-v4_13-12-2024_21-59-24",
+             "q2_pg_hopper_lambda_1_Hopper-v4_13-12-2024_22-08-12"]
+    data = []
+    for file in files:
+        data.append(np.genfromtxt(os.path.join("data", file, "data.csv"), names = True, delimiter=' '))
+
+    colors = ['r', 'g', 'b', 'k', 'c']
+    lines = ['-', '--', ':', '-.', '-']
+    # labels = [r"$\lambda$ = 0", r"$\lambda$ = 0.95", r"$\lambda$ = 0.98", r"$\lambda$ = 0.99", r"$\lambda$ = 1"]
+    labels = [r"$\lambda$ = 0",  r"$\lambda$ = 0.98", r"$\lambda$ = 1"]
+
+    plt.figure(figsize=(8, 6))
+    for i in range(3):
+        plt.plot(data[i]["Train_EnvstepsSoFar"], data[i]["Eval_AverageReturn"],
+                 color = colors[i], linestyle = lines[i], label = labels[i])
+
+    plt.ylabel("eval average return", fontsize = 16)
+    plt.xlabel("env step num", fontsize = 16)
+    plt.legend(loc = "lower right")
+    plt.title("Batch size 2000", fontsize = 20)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.suptitle(f"Experiment 3 (Hopper)", fontsize=20)
+    plt.savefig('data/3_Hopper.png')
+
+
 def main():
     # CartPole()
-    HalfCheetah()
+    # HalfCheetah()
+    # LunarLander()
+    Hopper()
 
     plt.show()
 
