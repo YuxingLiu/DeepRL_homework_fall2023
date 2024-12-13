@@ -66,19 +66,20 @@ def run_training_loop(args):
     total_envsteps = 0
     start_time = time.time()
 
+    saved_metrics = np.zeros((args.n_iter, 2))
     for itr in range(args.n_iter):
         print(f"\n********** Iteration {itr} ************")
-        # TODO: sample `args.batch_size` transitions using utils.sample_trajectories
+        # sample `args.batch_size` transitions using utils.sample_trajectories
         # make sure to use `max_ep_len`
-        trajs, envsteps_this_batch = None, None  # TODO
+        trajs, envsteps_this_batch = utils.sample_trajectories(env, agent.actor, args.batch_size, max_ep_len)
         total_envsteps += envsteps_this_batch
 
         # trajs should be a list of dictionaries of NumPy arrays, where each dictionary corresponds to a trajectory.
         # this line converts this into a single dictionary of lists of NumPy arrays.
         trajs_dict = {k: [traj[k] for traj in trajs] for k in trajs[0]}
 
-        # TODO: train the agent using the sampled trajectories and the agent's update function
-        train_info: dict = None
+        # train the agent using the sampled trajectories and the agent's update function
+        train_info: dict = agent.update(trajs_dict["observation"], trajs_dict["action"], trajs_dict["reward"], trajs_dict["terminal"])
 
         if itr % args.scalar_log_freq == 0:
             # save eval metrics
@@ -103,6 +104,9 @@ def run_training_loop(args):
                 logger.log_scalar(value, key, itr)
             print("Done logging...\n\n")
 
+            saved_metrics[itr, 0] = logs["Train_EnvstepsSoFar"]
+            saved_metrics[itr, 1] = logs["Eval_AverageReturn"]
+
             logger.flush()
 
         if args.video_log_freq != -1 and itr % args.video_log_freq == 0:
@@ -119,6 +123,8 @@ def run_training_loop(args):
                 video_title="eval_rollouts",
             )
 
+    header_str = "Train_EnvstepsSoFar Eval_AverageReturn"
+    np.savetxt(os.path.join(args.logdir, "data.csv"), saved_metrics, delimiter=" ", header=header_str, comments='')
 
 def main():
     import argparse
