@@ -46,8 +46,36 @@ def CartPole():
     plt.savefig('data/1_CartPole.png')
 
 
+def HalfCheetah():
+    files = ["q2_pg_cheetah_HalfCheetah-v4_13-12-2024_17-39-53",
+             "q2_pg_cheetah_baseline_HalfCheetah-v4_13-12-2024_17-48-07",
+             "q2_pg_cheetah_baseline_HalfCheetah-v4_13-12-2024_17-55-56",
+             "q2_pg_cheetah_baseline_HalfCheetah-v4_13-12-2024_18-18-40"]
+    data = []
+    for file in files:
+        data.append(np.genfromtxt(os.path.join("data", file, "data.csv"), names = True, delimiter=' '))
+
+    colors = ['r', 'g', 'b', 'k']
+    lines = ['-', '--', ':', '-.']
+    labels = ["reward-to-go", "baseline", "-bgs=1", "normalize-A"]
+
+    plt.figure(figsize=(8, 6))
+    for i in range(4):
+        plt.plot(data[i]["Train_EnvstepsSoFar"], data[i]["Eval_AverageReturn"],
+                 color = colors[i], linestyle = lines[i], label = labels[i])
+
+    plt.ylabel("eval average return", fontsize = 16)
+    plt.xlabel("env step num", fontsize = 16)
+    plt.legend(loc = "lower right")
+    plt.title("Batch size 5000", fontsize = 20)
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.suptitle(f"Experiment 2 (HalfCheetah)", fontsize=20)
+    plt.savefig('data/2_HalfCheetah.png')
+
 def main():
-    CartPole()
+    # CartPole()
+    HalfCheetah()
 
     plt.show()
 
