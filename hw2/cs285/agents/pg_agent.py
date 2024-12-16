@@ -125,8 +125,9 @@ class PGAgent(nn.Module):
             advantages = q_values
         else:
             # run the critic and use it as a baseline
-            values = ptu.to_numpy(self.critic(ptu.from_numpy(obs))).squeeze()
-            assert values.shape == q_values.shape
+            values_normalized = ptu.to_numpy(self.critic(ptu.from_numpy(obs)))
+            assert values_normalized.shape == q_values.shape
+            values = values_normalized * np.std(q_values) + np.mean(q_values)
 
             if self.gae_lambda is None:
                 # if using a baseline, but not GAE, what are the advantages?
