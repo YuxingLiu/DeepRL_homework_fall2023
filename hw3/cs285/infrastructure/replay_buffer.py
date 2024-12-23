@@ -144,7 +144,7 @@ class MemoryEfficientReplayBuffer:
         ), "Single-frame observation should have dimensions (H, W)"
         assert frame.dtype == np.uint8, "Observation should be uint8 (0-255)"
 
-        self.framebuffer[self.framebuffer_idx] = frame
+        self.framebuffer[self.framebuffer_idx % self.max_framebuffer_size] = frame
         frame_idx = self.framebuffer_idx
         self.framebuffer_idx = self.framebuffer_idx + 1
 
@@ -219,7 +219,6 @@ class MemoryEfficientReplayBuffer:
 
         Use like:
             replay_buffer.insert(
-                observation=observation,
                 action=action,
                 reward=reward,
                 next_observation=next_observation,

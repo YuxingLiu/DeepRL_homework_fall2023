@@ -87,25 +87,37 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
 
     reset_env_training()
 
+    total_envsteps = 0
+    saved_metrics = np.zeros((config["total_steps"] // args.eval_interval, 4))
     for step in tqdm.trange(config["total_steps"], dynamic_ncols=True):
         epsilon = exploration_schedule.value(step)
         
-        # TODO(student): Compute action
-        action = ...
+        # Compute action
+        action = agent.get_action(observation, epsilon)
 
-        # TODO(student): Step the environment
+        # Step the environment
+        next_observation, reward, terminated, info = env.step(action)
 
         next_observation = np.asarray(next_observation)
         truncated = info.get("TimeLimit.truncated", False)
+        done = terminated or truncated
 
-        # TODO(student): Add the data to the replay buffer
+        # Add the data to the replay buffer
         if isinstance(replay_buffer, MemoryEfficientReplayBuffer):
             # We're using the memory-efficient replay buffer,
             # so we only insert next_observation (not observation)
-            ...
+            for i in range(4):
+                replay_buffer.insert(action=action,
+                                     reward=reward,
+                                     next_observation=next_observation[i, ...],
+                                     done=terminated)
         else:
             # We're using the regular replay buffer
-            ...
+            replay_buffer.insert(observation=observation,
+                                 action=action,
+                                 reward=reward,
+                                 next_observation=next_observation,
+                                 done=terminated)
 
         # Handle episode termination
         if done:
@@ -118,14 +130,20 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
 
         # Main DQN training loop
         if step >= config["learning_starts"]:
-            # TODO(student): Sample config["batch_size"] samples from the replay buffer
-            batch = ...
+            # Sample config["batch_size"] samples from the replay buffer
+            batch = replay_buffer.sample(config["batch_size"])
+            total_envsteps += config["batch_size"]
 
             # Convert to PyTorch tensors
             batch = ptu.from_numpy(batch)
 
-            # TODO(student): Train the agent. `batch` is a dictionary of numpy arrays,
-            update_info = ...
+            # Train the agent. `batch` is a dictionary of numpy arrays,
+            update_info = agent.update(obs=batch["observations"],
+                                       action=batch["actions"],
+                                       reward=batch["rewards"],
+                                       next_obs=batch["next_observations"],
+                                       done=batch["dones"],
+                                       step=step)
 
             # Logging code
             update_info["epsilon"] = epsilon
@@ -158,6 +176,12 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
                 logger.log_scalar(np.max(ep_lens), "eval/ep_len_max", step)
                 logger.log_scalar(np.min(ep_lens), "eval/ep_len_min", step)
 
+            saved_metrics[step // args.eval_interval, 0] = total_envsteps
+            saved_metrics[step // args.eval_interval, 1] = np.mean(returns)
+            if step >= config["learning_starts"]:
+                saved_metrics[step // args.eval_interval, 2] = update_info["q_values"]
+                saved_metrics[step // args.eval_interval, 3] = update_info["critic_loss"]
+
             if args.num_render_trajectories > 0:
                 video_trajectories = utils.sample_n_trajectories(
                     render_env,
@@ -174,6 +198,9 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
                     max_videos_to_save=args.num_render_trajectories,
                     video_title="eval_rollouts",
                 )
+
+    header_str = "Train_EnvstepsSoFar Eval_AverageReturn Train_QValues Train_Loss"
+    np.savetxt(os.path.join(logger._log_dir, "data.csv"), saved_metrics, delimiter=" ", header=header_str, comments='')
 
 
 def main():

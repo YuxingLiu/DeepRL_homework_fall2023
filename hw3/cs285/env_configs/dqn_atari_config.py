@@ -48,12 +48,16 @@ def atari_dqn_config(
 
         return nn.Sequential(
             PreprocessAtari(),
+            # input size: (4, 84, 84)
             nn.Conv2d(in_channels=4, out_channels=32, kernel_size=8, stride=4),
             nn.ReLU(),
+            # size: (32, 20, 20)
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(),
+            # size: (64, 9, 9)
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU(),
+            # size: (64, 7, 7)
             nn.Flatten(),
             nn.Linear(3136, 512),  # 3136 hard-coded based on img size + CNN layers
             nn.ReLU(),
