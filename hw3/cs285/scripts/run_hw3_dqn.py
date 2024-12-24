@@ -96,11 +96,11 @@ def run_training_loop(config: dict, logger: Logger, args: argparse.Namespace):
         action = agent.get_action(observation, epsilon)
 
         # Step the environment
-        next_observation, reward, terminated, info = env.step(action)
+        next_observation, reward, done, info = env.step(action)
 
         next_observation = np.asarray(next_observation)
         truncated = info.get("TimeLimit.truncated", False)
-        done = terminated or truncated
+        terminated = done and not truncated
 
         # Add the data to the replay buffer
         if isinstance(replay_buffer, MemoryEfficientReplayBuffer):
