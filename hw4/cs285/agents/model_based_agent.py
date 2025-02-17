@@ -82,14 +82,16 @@ class ModelBasedAgent(nn.Module):
         obs = ptu.from_numpy(obs)
         acs = ptu.from_numpy(acs)
         next_obs = ptu.from_numpy(next_obs)
-        # TODO(student): update self.dynamics_models[i] using the given batch of data
+        # update self.dynamics_models[i] using the given batch of data
         # HINT: make sure to normalize the NN input (observations and actions)
         # *and* train it with normalized outputs (observation deltas) 
         # HINT 2: make sure to train it with observation *deltas*, not next_obs
         # directly
         # HINT 3: make sure to avoid any risk of dividing by zero when
         # normalizing vectors by adding a small number to the denominator!
-        loss = ...
+        input = (torch.cat((obs, acs), dim = 1) - self.obs_acs_mean) / (self.obs_acs_std + 1e-8)
+        target = (next_obs - obs - self.obs_delta_mean) / (self.obs_delta_std + 1e-8)
+        loss = self.loss_fn(self.dynamics_models[i](input), target)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -110,11 +112,11 @@ class ModelBasedAgent(nn.Module):
         obs = ptu.from_numpy(obs)
         acs = ptu.from_numpy(acs)
         next_obs = ptu.from_numpy(next_obs)
-        # TODO(student): update the statistics
-        self.obs_acs_mean = ...
-        self.obs_acs_std = ...
-        self.obs_delta_mean = ...
-        self.obs_delta_std = ...
+        # update the statistics
+        self.obs_acs_mean = torch.cat((torch.mean(obs, dim = 0), torch.mean(acs, dim = 0)))
+        self.obs_acs_std = torch.cat((torch.std(obs, dim = 0), torch.std(acs, dim = 0)))
+        self.obs_delta_mean = torch.mean(next_obs - obs, dim=0)
+        self.obs_delta_std = torch.std(next_obs - obs, dim=0)
 
     @torch.no_grad()
     def get_dynamics_predictions(
@@ -219,5 +221,6 @@ class ModelBasedAgent(nn.Module):
                 # TODO(student): implement the CEM algorithm
                 # HINT: you need a special case for i == 0 to initialize
                 # the elite mean and std
+                x = 1
         else:
             raise ValueError(f"Invalid MPC strategy '{self.mpc_strategy}'")
